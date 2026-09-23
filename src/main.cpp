@@ -1,35 +1,16 @@
-#include <LilyGoLib.h>
-
-#include "eventListener.hpp"
-#include "graphicalElement.hpp"
-#include "position.hpp"
-#include "touch.hpp"
-
-EventListener eventListener;
-GraphicalElement demo(Position(0,0), Position(50,50), State::EXO_ENABLED, &eventListener, "Demo", &watch);
-Touch touchManager(&watch);
-Position lastTouch;
+#include <Arduino.h>
+#include <M5Core2.h>
 
 void setup() {
-  watch.begin();
-  watch.disableBootDisplay();
-  watch.setBrightness(255);
+    M5.begin();
+
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setTextColor(WHITE);
+    M5.Lcd.setTextSize(2);
+    M5.Lcd.setCursor(20, 40);
+    M5.Lcd.println("Test Core2");
 }
 
 void loop() {
-  if(touchManager.isBeingTouched()){
-    lastTouch = touchManager.getPosition();
-  }
-  else{
-    lastTouch.x = -1;
-    lastTouch.y = -1;
-  }
-
-  // update all graphical elements
-  demo.update(lastTouch);
-  demo.draw();
-
-
-  // then update the eventListener which then sends via wifi to the exo the information
-  eventListener.update();
+    M5.update();
 }
