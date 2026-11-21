@@ -1,0 +1,49 @@
+BIOGENIUS - Client BLE pour M5Stack Core2
+
+INSTALLATION
+1. Sauvegarder le projet existant.
+2. Remplacer platformio.ini et le contenu de src par les fichiers fournis.
+3. Deplacer les anciens .cpp hors de src (y compris les anciens sous-dossiers).
+4. PlatformIO: Clean, puis Build, puis Upload.
+
+CIBLE
+Version concue pour le framework Arduino-ESP32 2.0.17 fourni par
+espressif32 7.0.0 et M5Core2 0.2.0. Ne pas ajouter de bibliotheque BLE tierce.
+Ce code n'a pas ete compile ni teste sur le materiel dans cet environnement.
+
+UTILISATION
+Accueil > Bluetooth > Chercher > toucher un appareil compatible.
+Retour reste disponible pendant le scan ou la connexion. Retour ne les annule
+pas et ne coupe pas une connexion active.
+Maximum : quatre resultats compatibles par recherche.
+
+CONTRAT DU FUTUR SIMULATEUR ESP32
+Serveur BLE nomme par exemple EXO-SIM-01.
+Annoncer le service 6E400001-B5A3-F393-E0A9-E50E24DCCA9E.
+RX : 6E400002-B5A3-F393-E0A9-E50E24DCCA9E, propriete WRITE.
+TX : 6E400003-B5A3-F393-E0A9-E50E24DCCA9E, propriete NOTIFY,
+avec descripteur BLE2902 (CCCD).
+RX designe ce que le serveur recoit, TX ce qu'il transmet.
+Recevoir PING sur RX et notifier PONG sur TX.
+Notifier STATE,ASSIS ou STATE,DEBOUT pour mettre a jour l'accueil.
+Le serveur doit relancer l'advertising apres une deconnexion.
+
+MESSAGES
+Un message ASCII par ecriture/notification, maximum 20 octets pour le prototype.
+ExoSend("P,75,178") est disponible via exoSend("P,75,178").
+Un retour true indique la mise en file locale, pas l'acceptation distante.
+L'ecran montre le dernier message recu. Les connexions ne sont pas appairees
+ni authentifiees dans ce prototype. Ce n'est pas une commande de moteurs et
+ce n'est pas un dispositif d'arret d'urgence.
+
+LIMITES
+Aucun serveur ESP32 n'est inclus : ceci est le firmware de la montre.
+Le scan est filtre sur le service du projet : les autres appareils BLE ne
+figurent pas dans la liste. Aucun appairage depuis les reglages Windows
+n'est necessaire. Le code ne sauvegarde pas le peripherique selectionne et
+ne fait pas de reconnexion automatique.
+Les operations BLE tournent dans une tache separee de l'affichage.
+La file des notifications a une capacite limitee : protocole de faible debit.
+Le partitionnement huge_app est utilise pour laisser davantage de place au
+firmware BLE. Pas de mise a jour OTA avec cette configuration. Tout ancien
+contenu de partitions de donnees doit etre sauvegarde avant televersement.

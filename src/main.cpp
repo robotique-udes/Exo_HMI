@@ -1,64 +1,50 @@
 #include <Arduino.h>
 #include <M5Core2.h>
-#include "ui.h"
+#include "home_page.h"
 #include "bluetooth_page.h"
-#include "wifi_page.h"
+#include "ble_link.h"
 
-enum Page {
-    PAGE_HOME,
-    PAGE_BLUETOOTH,
-    PAGE_WIFI
-};
-
-Page currentPage = PAGE_HOME;
-
+namespace {
+bool bluetoothPage=false;
+bool wasTouched=false;
+uint32_t lastRevision=UINT32_MAX;
+void render(const ExoSnapshot& s) {
+    if(bluetoothPage) drawBluetoothPage(s);
+    else drawHomePage(s.connected ? String(s.peer) : String(""),String(s.state));
+    lastRevision=s.revision;
+}
+}
 void setup() {
     M5.begin();
     M5.Lcd.setRotation(1);
-
-    drawHomePage();
+    exoBegin();
+    render(exoSnapshot());
 }
-
 void loop() {
     M5.update();
-
-    TouchPoint_t touch = M5.Touch.getPressPoint();
-
-    if (touch.x < 0 || touch.y < 0) {
-        return;
-    }
-
-    if (currentPage == PAGE_HOME) {
-        if (isCloseButton(touch.x, touch.y)) {
-            shutdownScreen();
-        }
-        else if (isBluetoothButton(touch.x, touch.y)) {
-            currentPage = PAGE_BLUETOOTH;
-            drawBluetoothPage();
-        }
-        else if (isWifiButton(touch.x, touch.y)) {
-            currentPage = PAGE_WIFI;
-            drawWifiPage();
-        }
-    }
-    else if (currentPage == PAGE_BLUETOOTH) {
-        if (isBackButton(touch.x, touch.y)) {
-            currentPage = PAGE_HOME;
-            drawHomePage();
-        }
-        else if (isScanBluetoothButton(touch.x, touch.y)) {
-            scanBluetoothDevices();
+    ExoSnapshot s=exoSnapshot();
+    if(s.revision!=lastRevision) render(s);
+    TouchPoint_t p=M5.Touch.getPressPoint();
+    bool touched=p.x>=0 && p.y>=0;
+    if(touched && !wasTouched) {
+        if(bluetoothPage) {
+            if(touchBluetoothPage(p.x,p.y,s)) {
+                bluetoothPage=false;
+                render(s);
+            }
+        } else {
+            switch(getHomeAction(p.x,p.y)) {
+                case HomeAction::Bluetooth:
+                    bluetoothPage=true;
+                    render(s);
+                    break;
+                case HomeAction::Profile: setHomeMessage("Page profil a venir"); break;
+                case HomeAction::Settings: setHomeMessage("Page reglages a venir"); break;
+                case HomeAction::Debug: setHomeMessage("Page debug a venir"); break;
+                default: break;
+            }
         }
     }
-    else if (currentPage == PAGE_WIFI) {
-        if (isBackButton(touch.x, touch.y)) {
-            currentPage = PAGE_HOME;
-            drawHomePage();
-        }
-        else if (isScanWifiButton(touch.x, touch.y)) {
-            scanWifiNetworks();
-        }
-    }
-
-    delay(150);
+    wasTouched=touched;
+    delay(10);
 }
